@@ -2,588 +2,605 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Doors Mobile FPS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Doors 3D Mobile</title>
   <style>
-    :root {
-      --bg: #0b0b0f;
-      --panel: rgba(255,255,255,0.08);
-      --ui: rgba(255,255,255,0.2);
-      --text: #f3f3f3;
-      --accent: #7ec7ff;
-      --door: #8a5a2b;
-      --doorShadow: #3a220d;
-    }
-
     * {
-      box-sizing: border-box;
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
       -webkit-user-select: none;
+      touch-action: none;
     }
 
     html, body {
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: var(--bg);
-      font-family: Arial, Helvetica, sans-serif;
-    }
-
-    body {
-      position: relative;
-      overscroll-behavior: none;
-    }
-
-    #game {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
       background: #000;
+      font-family: Arial, sans-serif;
     }
 
-    canvas {
-      position: absolute;
-      inset: 0;
+    #canvas {
       width: 100%;
       height: 100%;
       display: block;
-      background: #000;
-      touch-action: none;
-      cursor: grab;
-    }
-
-    canvas.dragging {
-      cursor: grabbing;
     }
 
     #hud {
       position: absolute;
       inset: 0;
       pointer-events: none;
-      z-index: 20;
+      z-index: 10;
     }
 
     #title {
       position: absolute;
-      left: 50%;
       top: 18px;
+      left: 50%;
       transform: translateX(-50%);
+      color: white;
+      font-size: 28px;
       font-weight: bold;
-      font-size: clamp(18px, 3vw, 30px);
-      letter-spacing: 2px;
-      color: var(--text);
-      text-shadow: 0 2px 12px rgba(0,0,0,0.7);
+      letter-spacing: 3px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.8);
     }
 
     #roomLabel {
       position: absolute;
+      top: 56px;
       left: 50%;
-      top: 54px;
       transform: translateX(-50%);
-      color: rgba(255,255,255,0.8);
-      font-size: clamp(12px, 2vw, 16px);
+      color: #ccc;
+      font-size: 14px;
       letter-spacing: 2px;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+      text-shadow: 0 2px 10px rgba(0,0,0,0.8);
     }
 
     #crosshair {
       position: absolute;
       left: 50%;
       top: 50%;
-      width: 20px;
-      height: 20px;
+      width: 24px;
+      height: 24px;
       transform: translate(-50%, -50%);
-    }
-
-    #crosshair::before,
-    #crosshair::after {
-      content: "";
-      position: absolute;
-      background: rgba(255,255,255,0.95);
-      border-radius: 999px;
-    }
-
-    #crosshair::before {
-      left: 50%;
-      top: 0;
-      width: 2px;
-      height: 100%;
-      transform: translateX(-50%);
-    }
-
-    #crosshair::after {
-      left: 0;
-      top: 50%;
-      width: 100%;
-      height: 2px;
-      transform: translateY(-50%);
+      border: 2px solid rgba(255,255,255,0.8);
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.5);
     }
 
     #message {
       position: absolute;
+      bottom: 140px;
       left: 50%;
-      bottom: 130px;
       transform: translateX(-50%);
-      max-width: 78%;
-      padding: 9px 14px;
-      border-radius: 12px;
+      color: white;
+      background: rgba(0,0,0,0.4);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 13px;
       text-align: center;
-      line-height: 1.3;
-      color: var(--text);
-      background: rgba(0,0,0,0.25);
-      border: 1px solid rgba(255,255,255,0.12);
-      backdrop-filter: blur(2px);
-      font-size: 12px;
+      max-width: 80%;
+      line-height: 1.4;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.8);
     }
 
-    #controls {
+    #mobileUI {
       position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 18px;
-      height: 125px;
-      z-index: 30;
+      inset: 0;
       pointer-events: none;
+      z-index: 20;
     }
 
-    .pad {
+    .joystick-container {
       position: absolute;
-      bottom: 0;
-      width: 128px;
-      height: 110px;
+      width: 140px;
+      height: 140px;
+      bottom: 20px;
+      pointer-events: auto;
+      z-index: 100;
+    }
+
+    #leftJoystick {
+      left: 20px;
+    }
+
+    #rightJoystick {
+      right: 20px;
+    }
+
+    .joystick-bg {
+      width: 100%;
+      height: 100%;
+      background: rgba(255,255,255,0.1);
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 50%;
+      position: relative;
+    }
+
+    .joystick-stick {
+      width: 60px;
+      height: 60px;
+      background: rgba(255,255,255,0.3);
+      border: 2px solid rgba(255,255,255,0.4);
+      border-radius: 50%;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .btn-group {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
       pointer-events: auto;
     }
 
-    .pad.left { left: 18px; }
-    .pad.right { right: 18px; }
-
-    .control-btn {
-      position: absolute;
-      width: 54px;
-      height: 54px;
+    .action-btn {
+      width: 50px;
+      height: 50px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.14);
-      border: 1px solid rgba(255,255,255,0.2);
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      background: rgba(100,200,255,0.15);
+      border: 2px solid rgba(100,200,255,0.4);
       color: white;
-      font-size: 22px;
+      font-size: 18px;
       font-weight: bold;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.22);
-      touch-action: manipulation;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
-    .control-btn:active {
-      transform: scale(0.97);
-      background: rgba(255,255,255,0.22);
+    .action-btn:active {
+      background: rgba(100,200,255,0.3);
+      transform: scale(0.95);
     }
 
-    #forward { left: 50%; top: 0; transform: translateX(-50%); }
-    #backward { left: 50%; bottom: 0; transform: translateX(-50%); }
-    #left { left: 0; top: 50%; transform: translateY(-50%); }
-    #right { right: 0; top: 50%; transform: translateY(-50%); }
+    #btnJump {
+      position: absolute;
+      bottom: 170px;
+      right: 40px;
+    }
 
-    @media (max-width: 430px) {
-      #message {
-        bottom: 138px;
-        font-size: 11px;
+    #btnE {
+      position: absolute;
+      bottom: 100px;
+      right: 40px;
+    }
+
+    @media (max-width: 600px) {
+      .joystick-container {
+        width: 120px;
+        height: 120px;
       }
 
-      .pad {
-        width: 110px;
+      .joystick-stick {
+        width: 50px;
+        height: 50px;
       }
 
-      .control-btn {
-        width: 48px;
-        height: 48px;
-        font-size: 20px;
+      .action-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 16px;
+      }
+
+      #btnJump {
+        bottom: 150px;
+        right: 30px;
+      }
+
+      #btnE {
+        bottom: 90px;
+        right: 30px;
       }
     }
   </style>
 </head>
 <body>
-  <div id="game">
-    <canvas id="gameCanvas"></canvas>
+  <canvas id="canvas"></canvas>
 
-    <div id="hud">
-      <div id="title">DOORS</div>
-      <div id="roomLabel">Room 1</div>
-      <div id="crosshair"></div>
-      <div id="message">Drag to look around • move with touch buttons</div>
-    </div>
-
-    <div id="controls">
-      <div class="pad left">
-        <div class="control-btn" id="forward">▲</div>
-        <div class="control-btn" id="backward">▼</div>
-      </div>
-
-      <div class="pad right">
-        <div class="control-btn" id="left">◀</div>
-        <div class="control-btn" id="right">▶</div>
-      </div>
-    </div>
+  <div id="hud">
+    <div id="title">DOORS</div>
+    <div id="roomLabel">Room 1</div>
+    <div id="crosshair"></div>
+    <div id="message">Drag left joystick to move • Drag right joystick to look</div>
   </div>
 
+  <div id="mobileUI">
+    <div class="joystick-container" id="leftJoystick">
+      <div class="joystick-bg">
+        <div class="joystick-stick" id="leftStick"></div>
+      </div>
+    </div>
+
+    <div class="joystick-container" id="rightJoystick">
+      <div class="joystick-bg">
+        <div class="joystick-stick" id="rightStick"></div>
+      </div>
+    </div>
+
+    <div class="action-btn" id="btnJump">JUMP</div>
+    <div class="action-btn" id="btnE">E</div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const roomLabel = document.getElementById('roomLabel');
-    const message = document.getElementById('message');
+    // Scene setup
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87ceeb);
+    scene.fog = new THREE.Fog(0x87ceeb, 50, 100);
 
-    const eventState = {
-      pointerDown: false,
-      lastX: 0,
-      lastY: 0,
-      activeTouch: null,
-    };
+    const canvas = document.getElementById('canvas');
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
 
-    const keys = {
-      forward: false,
-      backward: false,
-      left: false,
-      right: false,
-    };
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
 
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(10, 15, 10);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.width = 2048;
+    directionalLight.shadow.mapSize.height = 2048;
+    scene.add(directionalLight);
+
+    // Player
     const player = {
-      x: 0,
-      y: 1.65,
-      z: 0,
+      pos: new THREE.Vector3(0, 1.65, 0),
+      vel: new THREE.Vector3(0, 0, 0),
       yaw: 0,
       pitch: 0,
-      speed: 2.3,
-      radius: 0.45,
+      speed: 5,
+      sprintSpeed: 8,
+      jumpForce: 6,
+      isJumping: false,
+      gravity: 15,
+      radius: 0.4,
     };
 
-    const roomData = [
-      { name: 'Room 1', doorX: 0, doorZ: 5.2 },
-      { name: 'Room 2', doorX: 0, doorZ: 5.2 },
-      { name: 'Room 3', doorX: 0, doorZ: 5.2 },
-    ];
+    camera.position.copy(player.pos);
 
-    const walls = [
-      { x: -8, z: -8, w: 16, d: 1 },
-      { x: -8, z: 7, w: 16, d: 1 },
-      { x: -8, z: -8, w: 1, d: 16 },
-      { x: 7, z: -8, w: 1, d: 16 },
+    // Input
+    const keys = {};
+    const movement = { x: 0, z: 0 };
+    const look = { x: 0, y: 0 };
 
-      { x: 0, z: -2, w: 1, d: 6 },
-      { x: -2, z: 2, w: 5, d: 1 },
-      { x: 3, z: 2, w: 1, d: 7 },
-    ];
-
-    const gameState = {
-      roomIndex: 0,
-      doorOpenProgress: 0,
-      canInteract: false,
-      interactMessage: 'Drag to look around • move with touch buttons',
-      lastEPress: 0,
+    // Touch joysticks
+    const joysticks = {
+      left: { container: document.getElementById('leftJoystick'), stick: document.getElementById('leftStick'), active: false, x: 0, y: 0 },
+      right: { container: document.getElementById('rightJoystick'), stick: document.getElementById('rightStick'), active: false, x: 0, y: 0 },
     };
 
-    function resizeCanvas() {
-      const ratio = window.devicePixelRatio || 1;
-      canvas.width = Math.floor(window.innerWidth * ratio);
-      canvas.height = Math.floor(window.innerHeight * ratio);
-      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    function setupJoystick(joystick) {
+      const container = joystick.container;
+      const stick = joystick.stick;
+      const radius = container.offsetWidth / 2;
+
+      function handleJoystickMove(e) {
+        if (!joystick.active) return;
+
+        const rect = container.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        let touchX = 0, touchY = 0;
+
+        if (e.touches && e.touches.length > 0) {
+          touchX = e.touches[0].clientX;
+          touchY = e.touches[0].clientY;
+        } else if (e.clientX !== undefined) {
+          touchX = e.clientX;
+          touchY = e.clientY;
+        }
+
+        let dx = touchX - centerX;
+        let dy = touchY - centerY;
+        const dist = Math.hypot(dx, dy);
+        const maxDist = radius * 0.5;
+
+        if (dist > maxDist) {
+          const angle = Math.atan2(dy, dx);
+          dx = Math.cos(angle) * maxDist;
+          dy = Math.sin(angle) * maxDist;
+        }
+
+        joystick.x = dx / maxDist;
+        joystick.y = dy / maxDist;
+
+        stick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+      }
+
+      function handleStart(e) {
+        e.preventDefault();
+        joystick.active = true;
+        handleJoystickMove(e);
+      }
+
+      function handleEnd() {
+        joystick.active = false;
+        joystick.x = 0;
+        joystick.y = 0;
+        stick.style.transform = 'translate(-50%, -50%)';
+      }
+
+      container.addEventListener('touchstart', handleStart, { passive: false });
+      container.addEventListener('pointerdown', handleStart, { passive: false });
+
+      document.addEventListener('touchmove', handleJoystickMove, { passive: false });
+      document.addEventListener('pointermove', handleJoystickMove, { passive: false });
+
+      document.addEventListener('touchend', handleEnd);
+      document.addEventListener('pointerup', handleEnd);
     }
 
-    function clamp(value, min, max) {
-      return Math.min(Math.max(value, min), max);
+    setupJoystick(joysticks.left);
+    setupJoystick(joysticks.right);
+
+    // Action buttons
+    document.getElementById('btnJump').addEventListener('pointerdown', () => {
+      if (!player.isJumping) {
+        player.vel.y = player.jumpForce;
+        player.isJumping = true;
+      }
+    });
+
+    document.getElementById('btnE').addEventListener('pointerdown', () => {
+      checkDoorInteraction();
+    });
+
+    // Keyboard
+    window.addEventListener('keydown', (e) => {
+      keys[e.key.toLowerCase()] = true;
+      if (e.key.toLowerCase() === 'e') checkDoorInteraction();
+      if (e.key === ' ') {
+        if (!player.isJumping) {
+          player.vel.y = player.jumpForce;
+          player.isJumping = true;
+        }
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      keys[e.key.toLowerCase()] = false;
+    });
+
+    // Mouse look
+    let mouseDown = false;
+    let lastMouseX = 0, lastMouseY = 0;
+
+    canvas.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse') {
+        mouseDown = true;
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+      }
+    });
+
+    document.addEventListener('pointermove', (e) => {
+      if (mouseDown && e.pointerType === 'mouse') {
+        const dx = e.clientX - lastMouseX;
+        const dy = e.clientY - lastMouseY;
+        player.yaw -= dx * 0.005;
+        player.pitch -= dy * 0.005;
+        player.pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, player.pitch));
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+      }
+    });
+
+    document.addEventListener('pointerup', () => {
+      mouseDown = false;
+    });
+
+    // Rooms
+    const rooms = [
+      { name: 'Room 1', doorPos: new THREE.Vector3(0, 1.2, 5.5) },
+      { name: 'Room 2', doorPos: new THREE.Vector3(0, 1.2, 5.5) },
+      { name: 'Room 3', doorPos: new THREE.Vector3(0, 1.2, 5.5) },
+    ];
+
+    let currentRoom = 0;
+    const roomLabel = document.getElementById('roomLabel');
+    const messageBox = document.getElementById('message');
+
+    function updateRoomLabel() {
+      roomLabel.textContent = `Room ${currentRoom + 1}`;
     }
 
-    function collides(x, z) {
+    updateRoomLabel();
+
+    // World
+    const walls = [];
+
+    function createWall(x, z, width, depth, height, material) {
+      const geometry = new THREE.BoxGeometry(width, height, depth);
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(x, height / 2, z);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      walls.push({ pos: new THREE.Vector3(x, height / 2, z), size: new THREE.Vector3(width, height, depth) });
+      return mesh;
+    }
+
+    // Materials
+    const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.1, roughness: 0.8 });
+    const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x666666, metalness: 0, roughness: 0.9 });
+    const doorMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513, metalness: 0.3, roughness: 0.7 });
+
+    // Floor
+    const floorGeom = new THREE.PlaneGeometry(20, 20);
+    const floor = new THREE.Mesh(floorGeom, floorMaterial);
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Ceiling
+    const ceiling = new THREE.Mesh(floorGeom, new THREE.MeshStandardMaterial({ color: 0xaaaaaa }));
+    ceiling.rotation.x = Math.PI / 2;
+    ceiling.position.y = 3;
+    ceiling.receiveShadow = true;
+    scene.add(ceiling);
+
+    // Walls
+    scene.add(createWall(-8, 0, 1, 20, 3, wallMaterial)); // Left
+    scene.add(createWall(8, 0, 1, 20, 3, wallMaterial));  // Right
+    scene.add(createWall(0, -10, 16, 1, 3, wallMaterial)); // Back
+    scene.add(createWall(0, 10, 16, 1, 3, wallMaterial)); // Front
+
+    // Interior walls
+    scene.add(createWall(0, -2, 1, 6, 3, wallMaterial));
+    scene.add(createWall(-2, 2, 5, 1, 3, wallMaterial));
+
+    // Door
+    let door = null;
+    function createDoor() {
+      if (door) scene.remove(door);
+      const doorGeom = new THREE.BoxGeometry(1, 2, 0.1);
+      door = new THREE.Mesh(doorGeom, doorMaterial);
+      door.position.copy(rooms[currentRoom].doorPos);
+      door.castShadow = true;
+      door.receiveShadow = true;
+      scene.add(door);
+    }
+    createDoor();
+
+    // Door handle
+    function updateDoor() {
+      door.position.copy(rooms[currentRoom].doorPos);
+    }
+
+    // Collision detection
+    function checkCollision(pos) {
       for (const wall of walls) {
-        const minX = wall.x - wall.w / 2;
-        const maxX = wall.x + wall.w / 2;
-        const minZ = wall.z - wall.d / 2;
-        const maxZ = wall.z + wall.d / 2;
+        const w = wall.size.x / 2;
+        const h = wall.size.y / 2;
+        const d = wall.size.z / 2;
 
-        if (x > minX - player.radius && x < maxX + player.radius &&
-            z > minZ - player.radius && z < maxZ + player.radius) {
+        const minX = wall.pos.x - w;
+        const maxX = wall.pos.x + w;
+        const minY = wall.pos.y - h;
+        const maxY = wall.pos.y + h;
+        const minZ = wall.pos.z - d;
+        const maxZ = wall.pos.z + d;
+
+        if (pos.x > minX - player.radius && pos.x < maxX + player.radius &&
+            pos.y > minY - player.radius && pos.y < maxY + player.radius &&
+            pos.z > minZ - player.radius && pos.z < maxZ + player.radius) {
           return true;
         }
       }
       return false;
     }
 
-    function movePlayer(dt) {
-      let moveX = 0;
-      let moveZ = 0;
-
-      const forwardX = Math.cos(player.yaw);
-      const forwardZ = Math.sin(player.yaw);
-      const strafeX = Math.cos(player.yaw + Math.PI / 2);
-      const strafeZ = Math.sin(player.yaw + Math.PI / 2);
-
-      if (keys.forward) {
-        moveX += forwardX;
-        moveZ += forwardZ;
-      }
-      if (keys.backward) {
-        moveX -= forwardX;
-        moveZ -= forwardZ;
-      }
-      if (keys.left) {
-        moveX -= strafeX;
-        moveZ -= strafeZ;
-      }
-      if (keys.right) {
-        moveX += strafeX;
-        moveZ += strafeZ;
-      }
-
-      const len = Math.hypot(moveX, moveZ) || 1;
-      const stepX = (moveX / len) * player.speed * dt;
-      const stepZ = (moveZ / len) * player.speed * dt;
-
-      const nextX = player.x + stepX;
-      const nextZ = player.z + stepZ;
-
-      if (!collides(nextX, player.z)) player.x = nextX;
-      if (!collides(player.x, nextZ)) player.z = nextZ;
-
-      player.x = clamp(player.x, -7.1, 7.1);
-      player.z = clamp(player.z, -7.1, 7.1);
-    }
-
+    // Door interaction
     function checkDoorInteraction() {
-      const room = roomData[gameState.roomIndex];
-      const dist = Math.hypot(player.x - room.doorX, player.z - room.doorZ);
-      const inRange = dist < 1.15;
+      const doorPos = rooms[currentRoom].doorPos;
+      const dist = player.pos.distanceTo(doorPos);
 
-      gameState.canInteract = inRange;
+      if (dist < 1.5) {
+        currentRoom = (currentRoom + 1) % rooms.length;
+        player.pos.set(0, 1.65, -5);
+        player.vel.y = 0;
+        player.isJumping = false;
+        updateRoomLabel();
+        updateDoor();
+        messageBox.textContent = `Entered ${rooms[currentRoom].name}!`;
+        setTimeout(() => {
+          messageBox.textContent = 'Drag right joystick to look • E to open door';
+        }, 2000);
+      }
+    }
 
-      if (inRange) {
-        message.textContent = 'Tap E or press E to open the door';
+    // Update
+    const clock = new THREE.Clock();
+    function update() {
+      const dt = Math.min(clock.getDelta(), 0.05);
+
+      // Movement from keyboard
+      if (keys['w'] || keys['arrowup']) movement.z = 1;
+      else if (keys['s'] || keys['arrowdown']) movement.z = -1;
+      else movement.z = 0;
+
+      if (keys['a'] || keys['arrowleft']) movement.x = -1;
+      else if (keys['d'] || keys['arrowright']) movement.x = 1;
+      else movement.x = 0;
+
+      // Movement from left joystick
+      movement.z = joysticks.left.y;
+      movement.x = joysticks.left.x;
+
+      // Look from right joystick
+      player.yaw -= joysticks.right.x * 3 * dt;
+      player.pitch -= joysticks.right.y * 3 * dt;
+      player.pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, player.pitch));
+
+      // Calculate movement direction
+      const speed = keys['shift'] ? player.sprintSpeed : player.speed;
+      const moveLen = Math.hypot(movement.x, movement.z) || 1;
+      const moveX = (Math.cos(player.yaw) * movement.z - Math.sin(player.yaw) * movement.x) / moveLen * speed * dt;
+      const moveZ = (Math.sin(player.yaw) * movement.z + Math.cos(player.yaw) * movement.x) / moveLen * speed * dt;
+
+      // Apply movement with collision
+      const nextPos = player.pos.clone();
+      nextPos.x += moveX;
+      nextPos.z += moveZ;
+
+      if (!checkCollision(nextPos)) {
+        player.pos.x = Math.max(-7.5, Math.min(7.5, nextPos.x));
+        player.pos.z = Math.max(-9.5, Math.min(9.5, nextPos.z));
+      }
+
+      // Gravity
+      player.vel.y -= player.gravity * dt;
+      player.pos.y += player.vel.y * dt;
+
+      if (player.pos.y < 1.65) {
+        player.pos.y = 1.65;
+        player.vel.y = 0;
+        player.isJumping = false;
+      }
+
+      // Update camera
+      camera.position.copy(player.pos);
+      camera.rotation.order = 'YXZ';
+      camera.rotation.y = player.yaw;
+      camera.rotation.x = player.pitch;
+
+      // Door interaction check
+      const doorDist = player.pos.distanceTo(rooms[currentRoom].doorPos);
+      if (doorDist < 1.5) {
+        messageBox.textContent = 'Press E to open the door';
       } else {
-        message.textContent = 'Drag to look around • move with touch buttons';
+        messageBox.textContent = 'Drag right joystick to look • E to open door';
       }
+
+      renderer.render(scene, camera);
     }
 
-    function openDoor() {
-      if (!gameState.canInteract) return;
-
-      const now = performance.now();
-      if (now - gameState.lastEPress < 350) return;
-      gameState.lastEPress = now;
-
-      gameState.roomIndex = (gameState.roomIndex + 1) % roomData.length;
-      player.x = 0;
-      player.z = 0;
-      player.yaw = 0;
-      roomLabel.textContent = `Room ${gameState.roomIndex + 1}`;
-      message.textContent = `Entered ${roomData[gameState.roomIndex].name}`;
+    function animate() {
+      update();
+      requestAnimationFrame(animate);
     }
 
-    function drawSky() {
-      const sky = ctx.createLinearGradient(0, 0, 0, window.innerHeight);
-      sky.addColorStop(0, '#7bb8e8');
-      sky.addColorStop(1, '#dfefff');
-      ctx.fillStyle = sky;
-      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
-    }
-
-    function drawFloor() {
-      const floor = ctx.createLinearGradient(0, window.innerHeight * 0.45, 0, window.innerHeight);
-      floor.addColorStop(0, '#444');
-      floor.addColorStop(1, '#222');
-      ctx.fillStyle = floor;
-      ctx.fillRect(0, window.innerHeight * 0.46, window.innerWidth, window.innerHeight * 0.54);
-    }
-
-    function drawWorld() {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const fov = Math.PI / 3;
-      const rayCount = 160;
-
-      for (let i = 0; i < rayCount; i++) {
-        const ray = player.yaw - fov / 2 + (i / rayCount) * fov;
-        let distance = 0;
-        let hit = false;
-
-        while (distance < 18 && !hit) {
-          const testX = player.x + Math.cos(ray) * distance;
-          const testZ = player.z + Math.sin(ray) * distance;
-
-          for (const wall of walls) {
-            const minX = wall.x - wall.w / 2;
-            const maxX = wall.x + wall.w / 2;
-            const minZ = wall.z - wall.d / 2;
-            const maxZ = wall.z + wall.d / 2;
-
-            if (testX > minX && testX < maxX && testZ > minZ && testZ < maxZ) {
-              hit = true;
-              break;
-            }
-          }
-
-          distance += 0.08;
-        }
-
-        if (!hit) distance = 18;
-
-        const wallHeight = clamp((h / distance) * 1.6, 30, h * 0.9);
-        const x = (i / rayCount) * w;
-        const width = (w / rayCount) + 1;
-        const brightness = 1 - clamp(distance / 18, 0, 1);
-        const gray = 90 + brightness * 120;
-
-        ctx.fillStyle = `rgb(${gray}, ${gray}, ${gray})`;
-        ctx.fillRect(x, (h - wallHeight) / 2, width, wallHeight);
-
-        ctx.fillStyle = '#2a2a2a';
-        ctx.fillRect(x, (h + wallHeight) / 2, width, h - (h + wallHeight) / 2);
-
-        ctx.fillStyle = '#7eaed7';
-        ctx.fillRect(x, 0, width, (h - wallHeight) / 2);
-      }
-    }
-
-    function drawDoor() {
-      const room = roomData[gameState.roomIndex];
-      const dx = room.doorX - player.x;
-      const dz = room.doorZ - player.z;
-      const dist = Math.hypot(dx, dz);
-      const angleToDoor = Math.atan2(dz, dx) - player.yaw;
-
-      if (Math.abs(angleToDoor) < 1.4 && dist < 8) {
-        const size = clamp((window.innerHeight / dist) * 1.8, 40, 220);
-        const doorW = size * 0.72;
-        const doorH = size * 1.4;
-        const screenX = window.innerWidth / 2 + Math.tan(angleToDoor) * 260;
-        const screenY = window.innerHeight / 2 + 24;
-
-        ctx.fillStyle = '#8a5a2b';
-        ctx.fillRect(screenX - doorW / 2, screenY - doorH / 2, doorW, doorH);
-
-        ctx.strokeStyle = '#3b220d';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(screenX - doorW / 2, screenY - doorH / 2, doorW, doorH);
-
-        ctx.fillStyle = '#d9c7a1';
-        ctx.fillRect(screenX - doorW * 0.12, screenY - doorH * 0.28, doorW * 0.24, doorH * 0.56);
-      }
-    }
-
-    function render() {
-      drawSky();
-      drawFloor();
-      drawWorld();
-      drawDoor();
-    }
-
-    let lastTime = 0;
-    function loop(ts) {
-      const dt = Math.min((ts - lastTime) / 1000 || 0.016, 0.05);
-      lastTime = ts;
-
-      movePlayer(dt);
-      checkDoorInteraction();
-      render();
-      requestAnimationFrame(loop);
-    }
-
-    document.addEventListener('keydown', (event) => {
-      const key = event.key.toLowerCase();
-
-      if (key === 'w' || key === 'arrowup') keys.forward = true;
-      if (key === 's' || key === 'arrowdown') keys.backward = true;
-      if (key === 'a' || key === 'arrowleft') keys.left = true;
-      if (key === 'd' || key === 'arrowright') keys.right = true;
-      if (key === 'e') openDoor();
+    // Handle resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    document.addEventListener('keyup', (event) => {
-      const key = event.key.toLowerCase();
-
-      if (key === 'w' || key === 'arrowup') keys.forward = false;
-      if (key === 's' || key === 'arrowdown') keys.backward = false;
-      if (key === 'a' || key === 'arrowleft') keys.left = false;
-      if (key === 'd' || key === 'arrowright') keys.right = false;
-    });
-
-    function bindMovementButton(buttonId, moveKey) {
-      const btn = document.getElementById(buttonId);
-      btn.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        keys[moveKey] = true;
-      });
-      btn.addEventListener('pointerup', () => { keys[moveKey] = false; });
-      btn.addEventListener('pointerleave', () => { keys[moveKey] = false; });
-      btn.addEventListener('pointercancel', () => { keys[moveKey] = false; });
-    }
-
-    bindMovementButton('forward', 'forward');
-    bindMovementButton('backward', 'backward');
-    bindMovementButton('left', 'left');
-    bindMovementButton('right', 'right');
-
-    function onPointerDown(e) {
-      eventState.pointerDown = true;
-      eventState.lastX = e.clientX;
-      eventState.lastY = e.clientY;
-      canvas.classList.add('dragging');
-    }
-
-    function onPointerMove(e) {
-      if (!eventState.pointerDown) return;
-
-      const dx = e.clientX - eventState.lastX;
-      const dy = e.clientY - eventState.lastY;
-
-      player.yaw -= dx * 0.005;
-      player.pitch -= dy * 0.004;
-      player.pitch = clamp(player.pitch, -1.1, 1.1);
-
-      eventState.lastX = e.clientX;
-      eventState.lastY = e.clientY;
-    }
-
-    function onPointerUp() {
-      eventState.pointerDown = false;
-      canvas.classList.remove('dragging');
-    }
-
-    canvas.addEventListener('pointerdown', onPointerDown);
-    window.addEventListener('pointermove', onPointerMove);
-    window.addEventListener('pointerup', onPointerUp);
-    window.addEventListener('pointercancel', onPointerUp);
-
-    window.addEventListener('touchstart', (e) => {
-      if (e.target.closest('.control-btn')) return;
-      const touch = e.touches[0];
-      eventState.pointerDown = true;
-      eventState.lastX = touch.clientX;
-      eventState.lastY = touch.clientY;
-      canvas.classList.add('dragging');
-    }, { passive: true });
-
-    window.addEventListener('touchmove', (e) => {
-      if (!eventState.pointerDown) return;
-      const touch = e.touches[0];
-      const dx = touch.clientX - eventState.lastX;
-      const dy = touch.clientY - eventState.lastY;
-
-      player.yaw -= dx * 0.005;
-      player.pitch -= dy * 0.004;
-      player.pitch = clamp(player.pitch, -1.1, 1.1);
-
-      eventState.lastX = touch.clientX;
-      eventState.lastY = touch.clientY;
-    }, { passive: true });
-
-    window.addEventListener('touchend', onPointerUp, { passive: true });
-    window.addEventListener('resize', resizeCanvas);
-
-    resizeCanvas();
-    roomLabel.textContent = 'Room 1';
-    requestAnimationFrame(loop);
+    animate();
   </script>
 </body>
 </html>
